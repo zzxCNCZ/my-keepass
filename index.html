@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#181a1f">
+    <title>My KeePass</title>
+  </head>
+  <body>
+    <main class="workspace">
+      <nav id="menubar" class="menubar" aria-label="菜单栏"></nav>
+      <div class="tabbar" aria-label="数据库标签">
+        <div id="tabs" role="tablist"></div>
+        <button data-action="open-db" title="打开数据库 (⌘O)" aria-label="打开数据库">📂</button>
+        <button data-action="new-db" title="新建数据库" aria-label="新建数据库">＋</button>
+      </div>
+      <div class="toolbar" id="toolbar" aria-label="工具栏">
+        <button data-action="open-db" title="打开数据库">📂 打开</button>
+        <button data-action="save-db" id="btn-save" title="保存数据库 (⌘S)" disabled>💾 保存</button>
+        <span class="divider"></span>
+        <button data-action="new-entry" id="btn-new-entry" title="新建条目 (⌘N)" disabled>＋ 条目</button>
+        <button data-action="edit-entry" id="btn-edit-entry" title="编辑条目" disabled>✎ 编辑</button>
+        <button data-action="clone-entry" id="btn-clone-entry" title="克隆条目" disabled>⧉ 克隆</button>
+        <button data-action="delete-entry" id="btn-delete-entry" title="删除条目" disabled>🗑 删除</button>
+        <span class="divider"></span>
+        <button data-action="copy-username" id="btn-copy-user" title="复制用户名 (⌘B)" disabled>👤 复制账号</button>
+        <button data-action="copy-password" id="btn-copy-pass" title="复制密码 (⌘⇧C)" disabled>🔑 复制密码</button>
+        <button data-action="open-url" id="btn-open-url" title="打开 URL" disabled>↗ 打开链接</button>
+        <span class="divider"></span>
+        <button data-action="password-gen" title="密码生成器">⚡ 生成密码</button>
+        <button data-action="lock-db" id="btn-lock" title="锁定当前数据库 (⌘L)" disabled>🔒 锁定</button>
+        <div class="toolbar-search">
+          <input id="search-input" type="search" placeholder="搜索标题、账号、URL、标签… (⌘F)" aria-label="搜索条目" autocomplete="off" spellcheck="false" disabled>
+          <button id="search-clear" type="button" title="清除搜索" aria-label="清除搜索" hidden>×</button>
+        </div>
+      </div>
+
+      <div id="workspace-stage" class="stage">
+        <section id="welcome-view" class="welcome" aria-label="欢迎">
+          <div class="welcome-inner">
+            <div class="welcome-badge">KDBX 4 / KDBX 3 / KDB · LOCAL ENCRYPTED VAULT</div>
+            <h1>My KeePass<span>.</span></h1>
+            <p class="welcome-subtitle">使用主密码与可选密钥文件本地解密并管理你的 KeePass 密码库。所有密钥与明文仅存于本地内存，锁定时立即清理。</p>
+            <div class="welcome-actions">
+              <button class="primary" data-action="open-db">📂 打开已有数据库…</button>
+              <button class="secondary" data-action="new-db">＋ 新建加密数据库…</button>
+              <button class="secondary" data-action="password-gen">⚡ 密码生成器</button>
+              <button class="secondary" data-action="preferences">⚙ 偏好设置</button>
+            </div>
+            <div class="recent-section" id="recent-section" hidden>
+              <div class="recent-header">
+                <h2>最近打开的数据库</h2>
+              </div>
+              <div id="recent-list" class="recent-list"></div>
+            </div>
+            <div class="keyboard-help">
+              <kbd>⌘ O</kbd> 打开数据库
+              <kbd>⌘ N</kbd> 新建条目
+              <kbd>⌘ S</kbd> 保存
+              <kbd>⌘ F</kbd> 全局搜索
+              <kbd>⌘ L</kbd> 锁定
+              <kbd>⌘ ,</kbd> 偏好设置
+            </div>
+          </div>
+        </section>
+
+        <section id="locked-view" class="locked-view" aria-label="数据库已锁定" hidden>
+          <form id="unlock-form" class="unlock-card">
+            <div class="unlock-icon" aria-hidden="true">🔒</div>
+            <h2 id="unlock-title">数据库已锁定</h2>
+            <p id="unlock-path" class="unlock-path"></p>
+            <label>
+              主密码
+              <div class="input-with-btn">
+                <input id="unlock-password" type="password" autocomplete="off" placeholder="输入主密码，按回车解锁">
+                <button type="button" class="secondary" id="unlock-toggle-vis" title="显示/隐藏密码">👁</button>
+              </div>
+            </label>
+            <label>
+              密钥文件（可选）
+              <div class="input-with-btn">
+                <input id="unlock-keyfile" type="text" readonly placeholder="未使用密钥文件">
+                <button type="button" class="secondary" id="unlock-pick-keyfile">选择…</button>
+                <button type="button" class="secondary" id="unlock-clear-keyfile" title="清除密钥文件">×</button>
+              </div>
+            </label>
+            <p id="unlock-error" class="form-error" role="alert" hidden></p>
+            <div class="unlock-actions">
+              <button type="button" class="secondary" data-action="open-db" style="margin-right:auto">📂 打开其他…</button>
+              <button type="button" class="secondary" data-action="close-active-tab">关闭标签</button>
+              <button type="submit" class="primary" id="unlock-submit">🔓 解锁数据库</button>
+            </div>
+          </form>
+        </section>
+
+        <div id="vault-view" class="vault-area" hidden>
+          <aside class="panel groups-panel" id="groups" aria-label="分组树">
+            <div class="panel-header">
+              <span><i class="square blue"></i> 分组</span>
+              <span>
+                <button data-action="new-group" title="新建子分组" aria-label="新建子分组">＋</button>
+                <button data-action="db-settings" title="数据库设置" aria-label="数据库设置">⚙</button>
+              </span>
+            </div>
+            <div id="group-tree" class="tree scroll" role="tree" aria-label="分组列表"></div>
+            <div class="panel-footer" id="groups-footer">0 个分组</div>
+          </aside>
+
+          <div class="splitter vertical" data-split="groups" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="groups" aria-label="分组栏宽度" title="拖动调整分组栏宽度，双击恢复默认"></div>
+
+          <section class="panel entries-panel" id="entries-panel" aria-label="密码条目列表">
+            <div id="search-banner" class="search-banner" hidden>
+              <span id="search-summary"></span>
+              <button type="button" class="secondary" id="exit-search">返回当前分组</button>
+            </div>
+            <div class="entry-table-head" id="entry-head">
+              <button type="button" data-sort="title">标题 <span class="sort-ind"></span></button>
+              <button type="button" data-sort="username">用户名 <span class="sort-ind"></span></button>
+              <span>密码</span>
+              <button type="button" data-sort="url">URL <span class="sort-ind"></span></button>
+              <button type="button" data-sort="modifiedAt">修改时间 <span class="sort-ind"></span></button>
+              <span class="col-actions">操作</span>
+            </div>
+            <div id="entry-list" class="entry-list scroll" role="listbox" aria-label="条目列表"></div>
+            <div class="panel-footer" id="entries-footer">0 条记录</div>
+          </section>
+
+          <div class="splitter vertical detail-splitter" data-split="detail" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="detail" aria-label="详情栏宽度" title="拖动调整详情栏宽度，双击恢复默认"></div>
+
+          <aside class="panel detail-panel" id="detail" aria-label="条目详情">
+            <div class="panel-header">
+              <span class="detail-panel-heading"><i class="square amber"></i> 条目详情 <span class="readonly-badge">只读</span></span>
+              <button data-action="toggle-detail" title="关闭详情侧边栏 (Esc)" aria-label="关闭详情侧边栏">×</button>
+            </div>
+            <div id="detail-body" class="detail-body scroll"></div>
+          </aside>
+        </div>
+      </div>
+
+      <footer class="statusbar" aria-label="状态栏">
+        <div class="status-left">
+          <span id="status-file">未打开数据库</span>
+          <span id="status-format" class="status-pill" hidden></span>
+          <span id="status-dirty" class="status-pill dirty" hidden>● 未保存</span>
+          <span id="status-counts"></span>
+        </div>
+        <div class="status-right">
+          <span id="clipboard-banner" class="clipboard-pill" hidden>
+            <span id="clipboard-countdown"></span>
+            <button type="button" data-action="clear-clipboard" title="立即清空剪贴板">清空</button>
+          </span>
+          <span id="status-version"></span>
+        </div>
+      </footer>
+    </main>
+
+    <dialog id="modal" class="modal">
+      <form id="modal-form" method="dialog">
+        <header class="modal-header">
+          <h3 id="modal-title"></h3>
+          <button type="button" id="modal-close" aria-label="关闭">×</button>
+        </header>
+        <div id="modal-fields" class="modal-fields scroll"></div>
+        <footer id="modal-footer" class="modal-footer"></footer>
+      </form>
+    </dialog>
+
+    <div id="popup-menu" class="popup-menu" role="menu" hidden></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

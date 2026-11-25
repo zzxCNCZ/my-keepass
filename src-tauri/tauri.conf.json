@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "My KeePass",
+  "version": "1.0.0",
+  "identifier": "local.my-keepass.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1421",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "My KeePass",
+        "width": 1240,
+        "height": 800,
+        "minWidth": 880,
+        "minHeight": 560
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-src 'none'; object-src 'none'",
+      "capabilities": [
+        {
+          "identifier": "main-local",
+          "windows": ["main"],
+          "permissions": ["dialog:allow-open", "dialog:allow-save"]
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFCRDAxNkE2NzVFMTRFM0UKUldRK1R1RjFwaGJRcTUwWmxGMXFMUnJhZi9CWXlBYWFnUGxmYTJ3VkFueVh1RkVQcEkvaU44S1IK",
+      "endpoints": ["https://github.com/zzxCNCZ/my-keepass/releases/latest/download/latest.json"],
+      "requireSignedVersion": true,
+      "windows": { "installMode": "passive" }
+    }
+  }
+}
